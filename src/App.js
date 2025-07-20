@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useIotaClient } from '@iota/dapp-kit';
+import React, { useState, useEffect } from 'react';
+import { IotaClient } from '@iota/iota-sdk/client';
 
 function App() {
   const [image, setImage] = useState(null);
@@ -8,13 +8,72 @@ function App() {
   const [step, setStep] = useState(1);
   const [objectId, setObjectId] = useState('');
   const [queryResult, setQueryResult] = useState(null);
+  const [clientStatus, setClientStatus] = useState('Initializing...');
+  const [client, setClient] = useState(null);
+  const [imageHash, setImageHash] = useState('');
 
-  const { client } = useIotaClient();
+  useEffect(() => {
+    initializeClient();
+  }, []);
 
-  const handleImageChange = (e) => {
+  const initializeClient = async () => {
+    try {
+      console.log('Initializing IOTA client...');
+      setClientStatus('Connecting...');
+      
+      // Try different testnet URLs
+      const testnetUrls = [
+        'http://159.65.134.230:8080'
+      ];
+      
+      let iotaClient = null;
+      let lastError = null;
+      
+      for (const url of testnetUrls) {
+        try {
+          console.log(`Trying to connect to: ${url}`);
+          
+          iotaClient = new IotaClient({
+            nodes: [url],
+            localPow: false,
+          });
+          
+          console.log('Client created:', iotaClient);
+          
+          
+          setClient(iotaClient);
+          setClientStatus('Connected and ready');
+          console.log(`Successfully connected to ${url}`);
+          return;
+          
+        } catch (error) {
+          console.error(`Failed to connect to ${url}:`, error);
+          lastError = error;
+          continue;
+        }
+      }
+      
+      // If we get here, all URLs failed
+      console.error('All connection attempts failed. Last error:', lastError);
+      setClientStatus(`Connection failed: ${lastError?.message || 'Unknown error'}`);
+      
+    } catch (error) {
+      console.error('Failed to initialize client:', error);
+      setClientStatus(`Connection failed: ${error.message}`);
+    }
+  };
+
+  const handleImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0]);
+      const file = e.target.files[0];
+      setImage(file);
       setStep(2);
+      // Hash the image
+      const arrayBuffer = await file.arrayBuffer();
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      setImageHash(hashHex);
     }
   };
 
@@ -36,14 +95,36 @@ function App() {
   };
 
   const handleQueryObject = async () => {
-    if (!objectId.trim() || !client) return;
+    console.log('Query button clicked');
+    console.log('Object ID:', objectId);
+    console.log('Client:', client);
+    console.log('Client status:', clientStatus);
+    
+    if (!objectId.trim()) {
+      setQueryResult('Error: Please enter an Object ID');
+      return;
+    }
+    
+    if (!client) {
+      setQueryResult('Error: IOTA client not available. Please check the console for details.');
+      return;
+    }
     
     try {
       setQueryResult('Querying...');
+      console.log('Making API call to getObject with ID:', objectId);
+      
       const object = await client.getObject(objectId);
-      setQueryResult(JSON.stringify(object, null, 2));
+      console.log('API response:', object);
+      
+      if (object) {
+        setQueryResult(JSON.stringify(object, null, 2));
+      } else {
+        setQueryResult('No object found with this ID');
+      }
     } catch (error) {
-      setQueryResult(`Error: ${error.message}`);
+      console.error('Query error:', error);
+      setQueryResult(`Error: ${error.message || 'Failed to query object'}`);
     }
   };
 
@@ -72,7 +153,7 @@ function App() {
             />
             <button
               onClick={handleQueryObject}
-              disabled={!objectId.trim()}
+              disabled={!objectId.trim() || clientStatus !== 'Connected and ready'}
               className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               Query
@@ -83,6 +164,9 @@ function App() {
               <pre className="text-xs text-gray-300 overflow-auto max-h-32">{queryResult}</pre>
             </div>
           )}
+          <div className="mt-2 text-xs text-gray-400">
+            Client status: {clientStatus}
+          </div>
         </div>
 
         <div className="flex flex-col gap-6">
@@ -102,6 +186,11 @@ function App() {
                   alt="preview"
                   className="inline-block max-w-[180px] max-h-[180px] rounded-lg shadow-lg border border-[#393e6a]"
                 />
+                {imageHash && (
+                  <div className="mt-2 text-xs text-purple-200 break-all">
+                    <span className="font-semibold">SHA-256:</span> {imageHash}
+                  </div>
+                )}
               </div>
             )}
           </div>

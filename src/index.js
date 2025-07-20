@@ -7,10 +7,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { IotaClientProvider, WalletProvider } from '@iota/dapp-kit';
 import { getFullnodeUrl } from '@iota/iota-sdk/client';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 const networks = {
-  testnet: { url: getFullnodeUrl('testnet') },
+  testnet: { 
+    url: getFullnodeUrl('testnet'),
+    name: 'Testnet'
+  },
 };
+
+console.log('IOTA Networks configured:', networks);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
