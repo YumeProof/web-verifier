@@ -3,11 +3,25 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { IotaClientProvider, WalletProvider } from '@iota/dapp-kit';
+import { getFullnodeUrl } from '@iota/iota-sdk/client';
+
+const queryClient = new QueryClient();
+const networks = {
+  testnet: { url: getFullnodeUrl('testnet') },
+};
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <IotaClientProvider networks={networks} defaultNetwork="testnet">
+        <WalletProvider>
+          <App />
+        </WalletProvider>
+      </IotaClientProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );
 
