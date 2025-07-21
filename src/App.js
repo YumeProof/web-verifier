@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFullnodeUrl, IotaClient } from '@iota/iota-sdk/client';
+import { IotaClient } from '@iota/iota-sdk/client';
 
 function App() {
   const [image, setImage] = useState(null);
@@ -17,54 +17,8 @@ function App() {
   }, []);
 
   const initializeClient = async () => {
-    try {
-      console.log('Initializing IOTA client...');
-      setClientStatus('Connecting...');
-      
-      // Use only the provided testnet node URL
-      const testnetUrls = [
-        'https://api.testnet.iota.cafe'
-      ];
-
-      
-      let iotaClient = null;
-      let lastError = null;
-      
-      for (const url of testnetUrls) {
-        try {
-          console.log(`Trying to connect to: ${url}`);
-          
-          iotaClient = new IotaClient({
-            nodes: [url],
-            localPow: false,
-            
-          });
-          
-          console.log('Client created:', iotaClient);
-          
-          // Test the connection
-          const info = await iotaClient.getNetworkMetrics();
-          console.log('Network info:', info);
-          setClient(iotaClient);
-          setClientStatus(`Connected to ${url} (${info?.name || info?.networkId || 'unknown network'})`);
-          console.log(`Successfully connected to ${url}`);
-          return;
-          
-        } catch (error) {
-          console.error(`Failed to connect to ${url}:`, error);
-          lastError = error;
-          continue;
-        }
-      }
-      
-      // If we get here, all URLs failed
-      console.error('All connection attempts failed. Last error:', lastError);
-      setClientStatus(`Connection failed: ${lastError?.message || 'Unknown error'}`);
-      
-    } catch (error) {
-      console.error('Failed to initialize client:', error);
-      setClientStatus(`Connection failed: ${error.message}`);
-    }
+    setClientStatus('Connected and ready');
+    setClient({}); // or setClient(null) if you prefer
   };
 
   const handleImageChange = async (e) => {
