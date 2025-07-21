@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IotaClient } from '@iota/iota-sdk/client';
+import { getFullnodeUrl, IotaClient } from '@iota/iota-sdk/client';
 
 function App() {
   const [image, setImage] = useState(null);
@@ -23,8 +23,9 @@ function App() {
       
       // Try different testnet URLs
       const testnetUrls = [
-        'http://159.65.134.230:8080'
+        'http://159.65.134.230:8080',
       ];
+
       
       let iotaClient = null;
       let lastError = null;
@@ -36,6 +37,7 @@ function App() {
           iotaClient = new IotaClient({
             nodes: [url],
             localPow: false,
+            
           });
           
           console.log('Client created:', iotaClient);
@@ -114,7 +116,9 @@ function App() {
       setQueryResult('Querying...');
       console.log('Making API call to getObject with ID:', objectId);
       
-      const object = await client.getObject(objectId);
+      const object = await client.getObject({
+        id: objectId
+      });
       console.log('API response:', object);
       
       if (object) {
@@ -171,11 +175,11 @@ function App() {
 
         <div className="flex flex-col gap-6">
           <div className={step >= 1 ? "opacity-100" : "opacity-60"}>
-            <label htmlFor="image-upload" className="block font-semibold mb-2 text-gray-200">1. Upload Image</label>
+            <label htmlFor="image-upload" className="block font-semibold mb-2 text-gray-200">1. Upload YumeProof File</label>
             <input
               id="image-upload"
               type="file"
-              accept="image/*"
+              accept=".yumeproof"
               onChange={handleImageChange}
               className="block w-full px-3 py-2 border border-[#393e6a] rounded-lg bg-[#23284a] text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400"
             />
