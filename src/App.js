@@ -21,9 +21,9 @@ function App() {
       console.log('Initializing IOTA client...');
       setClientStatus('Connecting...');
       
-      // Try different testnet URLs
+      // Use only the provided testnet node URL
       const testnetUrls = [
-        'http://159.65.134.230:8080',
+        'https://api.testnet.iota.cafe'
       ];
 
       
@@ -42,9 +42,11 @@ function App() {
           
           console.log('Client created:', iotaClient);
           
-          
+          // Test the connection
+          const info = await iotaClient.getNetworkMetrics();
+          console.log('Network info:', info);
           setClient(iotaClient);
-          setClientStatus('Connected and ready');
+          setClientStatus(`Connected to ${url} (${info?.name || info?.networkId || 'unknown network'})`);
           console.log(`Successfully connected to ${url}`);
           return;
           
@@ -96,7 +98,8 @@ function App() {
     }, 1000);
   };
 
-  const handleQueryObject = async () => {
+  const handleQueryObject = async (e) => {
+    if (e) e.preventDefault();
     console.log('Query button clicked');
     console.log('Object ID:', objectId);
     console.log('Client:', client);
@@ -147,30 +150,29 @@ function App() {
         {/* IOTA Object Query Section */}
         <div className="mb-8 p-4 bg-[#1a1f3a] rounded-lg border border-[#393e6a]">
           <h2 className="text-lg font-semibold mb-3 text-white">Query IOTA Testnet Object</h2>
-          <div className="flex gap-2 mb-3">
-            <input
-              type="text"
-              value={objectId}
-              onChange={handleObjectIdChange}
-              placeholder="Enter Object ID..."
-              className="flex-1 px-3 py-2 border border-[#393e6a] rounded-lg bg-[#23284a] text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400"
-            />
-            <button
-              onClick={handleQueryObject}
-              disabled={!objectId.trim() || clientStatus !== 'Connected and ready'}
-              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              Query
-            </button>
-          </div>
+          <form onSubmit={handleQueryObject}>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={objectId}
+                onChange={handleObjectIdChange}
+                placeholder="Enter Object ID..."
+                className="flex-1 px-3 py-2 border border-[#393e6a] rounded-lg bg-[#23284a] text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400"
+              />
+              <button
+                type="submit"
+                disabled={!objectId.trim() || clientStatus !== 'Connected and ready'}
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                Query
+              </button>
+            </div>
+          </form>
           {queryResult && (
             <div className="mt-3 p-3 bg-[#23284a] rounded-lg border border-[#393e6a]">
               <pre className="text-xs text-gray-300 overflow-auto max-h-32">{queryResult}</pre>
             </div>
           )}
-          <div className="mt-2 text-xs text-gray-400">
-            Client status: {clientStatus}
-          </div>
         </div>
 
         <div className="flex flex-col gap-6">
@@ -211,13 +213,15 @@ function App() {
             />
           </div>
           <div className={step >= 2 ? "opacity-100" : "opacity-60"}>
-            <button
-              className="w-full py-3 rounded-lg font-semibold text-lg mt-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg hover:from-purple-400 hover:to-indigo-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              onClick={handleVerify}
-              disabled={!image || !verificationData}
-            >
-              Verify
-            </button>
+            <form onSubmit={handleVerify}>
+              <button
+                type="submit"
+                className="w-full py-3 rounded-lg font-semibold text-lg mt-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg hover:from-purple-400 hover:to-indigo-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={!image || !verificationData}
+              >
+                Verify
+              </button>
+            </form>
           </div>
           <div className="mt-4 text-center">
             {result && (
